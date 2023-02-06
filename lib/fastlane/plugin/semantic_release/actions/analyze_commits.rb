@@ -148,15 +148,32 @@ module Fastlane
             ignore_scopes: params[:ignore_scopes]
           )
 
+          has_changed_version = false
+
           if commit[:release] == "major" || commit[:is_breaking_change]
             next_major += 1
             next_minor = 0
             next_patch = 0
+            has_changed_version = true
           elsif commit[:release] == "minor"
             next_minor += 1
             next_patch = 0
+            has_changed_version = true
           elsif commit[:release] == "patch"
             next_patch += 1
+            has_changed_version = true
+          elsif commit[:release] == "none"
+            next_patch += 0
+          end
+
+          unless has_changed_version
+            if releases["all"] == "major"
+              next_major += 1
+            elsif releases["all"] == "minor"
+              next_minor += 1
+            elsif releases["all"] == "patch"
+              next_patch += 1
+            end
           end
 
           unless commit[:is_codepush_friendly]
@@ -300,7 +317,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(
             key: :releases,
             description: "Map types of commit to release (major, minor, patch)",
-            default_value: { fix: "patch", feat: "minor" },
+            default_value: { fix: "patch", feat: "minor", all: "minor"},
             type: Hash
           ),
           FastlaneCore::ConfigItem.new(
