@@ -243,16 +243,33 @@ module Fastlane
             codepush_friendly: codepush_friendly
           )
 
+          has_changed_version = false
+
           if commit[:release] == "major" || commit[:is_breaking_change]
             next_major += 1
             next_minor = 0
             next_patch = 0
+            has_changed_version = true
           elsif commit[:release] == "minor"
             next_minor += 1
             next_patch = 0
+            has_changed_version = true
           elsif commit[:release] == "patch"
             next_patch += 1
+            has_changed_version = true
+          elsif commit[:release] == "none"
+            next_patch += 0
           end
+
+          if has_changed_version == false
+            if releases["all"] == "major"
+              next_major += 1
+            elsif releases["all"] == "minor"
+              next_minor += 1
+            elsif releases["all"] == "patch"
+              next_patch += 1
+            end
+          endq
 
           unless commit[:is_codepush_friendly]
             last_incompatible_codepush_version = "#{next_major}.#{next_minor}.#{next_patch}"
