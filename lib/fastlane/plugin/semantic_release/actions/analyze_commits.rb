@@ -166,7 +166,7 @@ module Fastlane
             next_patch += 0
           end
 
-          unless has_changed_version
+          if has_changed_version == false
             if releases["all"] == "major"
               next_major += 1
             elsif releases["all"] == "minor"
