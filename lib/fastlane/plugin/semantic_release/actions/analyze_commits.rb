@@ -130,6 +130,7 @@ module Fastlane
         releases = params[:releases]
 
         format_pattern = lane_context[SharedValues::CONVENTIONAL_CHANGELOG_ACTION_FORMAT_PATTERN]
+        has_changed_version = false
         splitted.each do |line|
           parts = line.split("|")
           subject = parts[0].strip
@@ -148,8 +149,6 @@ module Fastlane
             ignore_scopes: params[:ignore_scopes]
           )
 
-          has_changed_version = false
-
           if commit[:release] == "major" || commit[:is_breaking_change]
             next_major += 1
             next_minor = 0
@@ -166,22 +165,23 @@ module Fastlane
             next_patch += 0
           end
 
-          if has_changed_version == false
-            if releases["all"] == "major"
-              next_major += 1
-            elsif releases["all"] == "minor"
-              next_minor += 1
-            elsif releases["all"] == "patch"
-              next_patch += 1
-            end
-          end
-
           unless commit[:is_codepush_friendly]
             is_next_version_compatible_with_codepush = false
           end
 
           next_version = "#{next_major}.#{next_minor}.#{next_patch}"
           UI.message("#{next_version}: #{subject}") if params[:show_version_path]
+        end
+
+        if has_changed_version == false
+          if releases[:all] == "major"
+            next_major += 1
+          elsif releases[:all] == "minor"
+            next_minor += 1
+          elsif releases[:all] == "patch"
+            next_patch += 1
+          end
+          next_version = "#{next_major}.#{next_minor}.#{next_patch}"
         end
 
         next_version = "#{next_major}.#{next_minor}.#{next_patch}"
@@ -232,6 +232,7 @@ module Fastlane
         codepush_friendly = params[:codepush_friendly]
 
         format_pattern = lane_context[SharedValues::CONVENTIONAL_CHANGELOG_ACTION_FORMAT_PATTERN]
+        has_changed_version = false
         splitted.each do |line|
           # conventional commits are in format
           # type: subject (fix: app crash - for example)
@@ -242,8 +243,6 @@ module Fastlane
             pattern: format_pattern,
             codepush_friendly: codepush_friendly
           )
-
-          has_changed_version = false
 
           if commit[:release] == "major" || commit[:is_breaking_change]
             next_major += 1
@@ -261,19 +260,20 @@ module Fastlane
             next_patch += 0
           end
 
-          if has_changed_version == false
-            if releases["all"] == "major"
-              next_major += 1
-            elsif releases["all"] == "minor"
-              next_minor += 1
-            elsif releases["all"] == "patch"
-              next_patch += 1
-            end
-          endq
-
           unless commit[:is_codepush_friendly]
             last_incompatible_codepush_version = "#{next_major}.#{next_minor}.#{next_patch}"
           end
+        end
+
+        if has_changed_version == false
+          if releases[:all] == "major"
+            next_major += 1
+          elsif releases[:all] == "minor"
+            next_minor += 1
+          elsif releases[:all] == "patch"
+            next_patch += 1
+          end
+          last_incompatible_codepush_version = "#{next_major}.#{next_minor}.#{next_patch}"
         end
 
         Actions.lane_context[SharedValues::RELEASE_LAST_INCOMPATIBLE_CODEPUSH_VERSION] = last_incompatible_codepush_version
